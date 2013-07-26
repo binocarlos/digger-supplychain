@@ -1,0 +1,32 @@
+{
+  "name": "digger-supplychain",
+  "version": "0.0.1",
+  "description": "The supply chain wrapper for digger.io transport layers",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/binocarlos/digger-supplychain.git"
+  },
+  "keywords": [
+    "digger"
+  ],
+  "author": "Kai Davenport",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "gitHead": "445b48e84d5494a596bc6364c1ead1b38f021009",
+  "bugs": {
+    "url": "https://github.com/binocarlos/digger-supplychain/issues"
+  },
+  "devDependencies": {
+    "mocha": "~1.12.0",
+    "should": "~1.2.2",
+    "digger-contracts": "~0.0.4",
+  },
+  "dependencies": {
+    "digger-container": "~0.0.10",
+    "q": "~0.9.6"
+  }
+}
