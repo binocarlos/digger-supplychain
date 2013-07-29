@@ -31,6 +31,7 @@ var Container = require('digger-container');
 var Q = require('q');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
+var utils = require('digger-utils');
 
 
 module.exports = factory;
@@ -57,6 +58,48 @@ function SupplyChain(handle){
 
 util.inherits(SupplyChain, EventEmitter);
 
+function parse_multipart_response(topres){
+  var results = {
+    // array of actual results flattened
+    body:[],
+    // array of successful responses
+    success:[],
+    // array of error responses
+    errors:[]
+  }
+
+  function process_response(res){
+    if(!res.headers){
+      res.headers = {};
+    }
+    if(res.headers["content-type"]==='digger/multipart'){
+      res.body.forEach(function(child_res){
+        process_response(child_res);  
+      })
+      
+    }
+    else{
+      if(res.statusCode===200){
+        if(utils.isArray(res.body)){
+          results.body = results.body.concat(res.body);  
+        }
+        else if(res.body!==null && res.body!==undefined){
+          results.body.push(res.body);
+        }
+        results.success.push(res);
+      }
+      else{
+        results.errors.push(res);
+      }
+    }
+  }
+
+  process_response(topres);
+
+  return results;
+}
+
+
 /*
 
   the handler function accepts a pure JS req object to be sent to the server as HTTP or socket (but it's basically a HTTP)
@@ -64,11 +107,12 @@ util.inherits(SupplyChain, EventEmitter);
   it returns a promise that will resolve once the callback based handle function passed in to the supplychain has returned
   
 */
-SupplyChain.prototype.contract = function(req, results_processor){
+SupplyChain.prototype.contract = function(req, container){
 
   var self = this;
 
   var loadresults = Q.defer();
+  var results_processor = null;
 
   function trigger_request(){
     if(!self.handle || typeof(self.handle)!='function'){
@@ -78,20 +122,17 @@ SupplyChain.prototype.contract = function(req, results_processor){
     }
     else{
       self.handle(req, function(error, result){
-        var sendresult = result;
-      
-        if(results_processor){
-          sendresult = results_processor(result);
-        }
-
         if(error){
           loadresults.reject(error);
         }
         else{
-          loadresults.resolve({
-            result:sendresult,
-            response:result
-          })
+          var parsed_response = parse_multipart_response(result);
+          
+          if(results_processor){
+            parsed_response.body = results_processor(parsed_response.body);
+          }
+
+          loadresults.resolve(parsed_response);
         }
       })
     }
@@ -110,7 +151,10 @@ SupplyChain.prototype.contract = function(req, results_processor){
     promise
       .then(function(answer){
         if(fn){
-          fn(answer.result, answer.response);
+          fn(answer.body, answer);
+          if(req._after){
+            req._after(answer.body, answer);
+          }
         }
       })
     process.nextTick(function(){
@@ -120,7 +164,21 @@ SupplyChain.prototype.contract = function(req, results_processor){
   }
   req.error = function(fn){
     promise.error(fn);
+    return this;
   }
+  req.expect = function(type){
+    if(type=='containers'){
+      results_processor = function(results){
+        return container.spawn(results);
+      }
+    }
+    return this;
+  }
+  req.after = function(fn){
+    req._after = fn;
+    return this;
+  }
+
   return req;
 
 }

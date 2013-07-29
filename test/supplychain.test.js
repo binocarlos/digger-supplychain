@@ -42,7 +42,9 @@ describe('supplychain', function(){
 
     container.diggerurl().should.equal('/');
     
-    container('hello').ship(function(){
+    var contract = container('hello');
+
+    contract.ship(function(){
       done();
     })
 
