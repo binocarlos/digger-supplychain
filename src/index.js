@@ -52,6 +52,9 @@ function factory(handle){
 */
 
 function SupplyChain(handle){
+
+  // force the request into new references so we are not messing with client
+  // data if this is an entirely local setup
   this.handle = handle;
 }
 
@@ -62,6 +65,8 @@ function parse_multipart_response(topres){
   var results = {
     // array of actual results flattened
     body:[],
+    statusCode:topres.statusCode,
+    headers:topres.headers,
     // array of successful responses
     success:[],
     // array of error responses
@@ -111,6 +116,9 @@ SupplyChain.prototype.contract = function(req, container){
 
   var self = this;
 
+  if(!req.headers){
+    req.headers = {};
+  }
   var loadresults = Q.defer();
   var results_processor = null;
 
@@ -178,6 +186,10 @@ SupplyChain.prototype.contract = function(req, container){
     req._after = fn;
     return this;
   }
+  req.debug = function(){
+    req.headers['x-debug'] = true;
+    return this;
+  }
 
   return req;
 
@@ -216,7 +228,11 @@ SupplyChain.prototype.contract_group = function(type, contracts){
     body:contracts || []
   }
 
-  return this.contract(raw);
+  // we use this to generate hooked up containers as results
+  var stub = Container();
+  stub.supplychain = this;
+
+  return this.contract(raw, stub);
 }
 
 /*
