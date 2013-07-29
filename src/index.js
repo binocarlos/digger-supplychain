@@ -64,34 +64,64 @@ util.inherits(SupplyChain, EventEmitter);
   it returns a promise that will resolve once the callback based handle function passed in to the supplychain has returned
   
 */
-SupplyChain.prototype.contract = function(req){
+SupplyChain.prototype.contract = function(req, results_processor){
 
   var self = this;
 
   var loadresults = Q.defer();
 
-  if(!self.handle || typeof(self.handle)!='function'){
-    setTimeout(function(){
-      loadresults.reject('There is no handle method attached to this supplychain')
-    }, 0)
-  }
-  else{
-    self.handle(req, function(error, result){
-      if(error){
-        loadresults.reject(error);
-      }
-      else{
-        loadresults.resolve(result);
-      }
-    })
+  function trigger_request(){
+    if(!self.handle || typeof(self.handle)!='function'){
+      setTimeout(function(){
+        loadresults.reject('There is no handle method attached to this supplychain')
+      }, 0)
+    }
+    else{
+      self.handle(req, function(error, result){
+        var sendresult = result;
+      
+        if(results_processor){
+          sendresult = results_processor(result);
+        }
+
+        if(error){
+          loadresults.reject(error);
+        }
+        else{
+          loadresults.resolve({
+            result:sendresult,
+            response:result
+          })
+        }
+      })
+    }
   }
 
   var promise = loadresults.promise;
-  promise.contract = req;
-  promise.ship = function(fn){
-    return promise.then(fn);
+  
+  /*
+  
+    we are basically wrapping the .then method of a promise here
+    but intercepting the results
+    
+  */
+  loadresults.contract = req;
+  req.ship = function(fn){
+    promise
+      .then(function(answer){
+        if(fn){
+          fn(answer.result, answer.response);
+        }
+      })
+    process.nextTick(function(){
+      trigger_request();
+    })
+    return this;
   }
-  return promise;
+  req.error = function(fn){
+    promise.error(fn);
+  }
+  return req;
 
 }
 
@@ -117,3 +147,34 @@ SupplyChain.prototype.connect = function(diggerwarehouse, diggerid){
   return container;
 }
 
+SupplyChain.prototype.contract_group = function(type, contracts){
+  var raw = {
+    method:'post',
+    url:'/reception',
+    headers:{
+      'content-type':'digger/contract',
+      'x-contract-type':type
+    },
+    body:contracts || []
+  }
+
+  return this.contract(raw);
+}
+
+/*
+
+  create a merge contract from an array of existing contracts
+  
+*/
+SupplyChain.prototype.merge = function(contracts){
+  return this.contract_group('merge', contracts);
+}
+
+/*
+
+  create a pipe contract from an array of existing contracts
+  
+*/
+SupplyChain.prototype.pipe = function(contracts){
+  return this.contract_group('pipe', contracts);
+}
