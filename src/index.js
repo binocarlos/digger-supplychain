@@ -36,9 +36,9 @@ var utils = require('digger-utils');
 
 module.exports = factory;
 
-function factory(handle){
+function factory(handle, use_container){
 
-  var supplychain = new SupplyChain(handle);
+  var supplychain = new SupplyChain(handle, use_container);
 
   return supplychain;
 }
@@ -51,11 +51,12 @@ function factory(handle){
   
 */
 
-function SupplyChain(handle){
+function SupplyChain(handle, use_container){
 
   // force the request into new references so we are not messing with client
   // data if this is an entirely local setup
   this.handle = handle;
+  this.container = use_container || Container;
 }
 
 
@@ -208,7 +209,8 @@ SupplyChain.prototype.contract = function(req, container){
   
 */
 SupplyChain.prototype.connect = function(diggerwarehouse, diggerid){
-  var container = Container(arguments.length>1 ? 'item' : '_supplychain');
+  var self = this;
+  var container = self.container(arguments.length>1 ? 'item' : '_supplychain');
   container.diggerwarehouse(diggerwarehouse || '/');
   if(arguments.length>1){
     container.diggerid(diggerid);
@@ -229,7 +231,7 @@ SupplyChain.prototype.contract_group = function(type, contracts){
   }
 
   // we use this to generate hooked up containers as results
-  var stub = Container();
+  var stub = self.container();
   stub.supplychain = this;
 
   return this.contract(raw, stub);
