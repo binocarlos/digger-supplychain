@@ -62,50 +62,6 @@ function SupplyChain(handle, use_container){
 
 util.inherits(SupplyChain, EventEmitter);
 
-function parse_multipart_response(topres){
-  var results = {
-    // array of actual results flattened
-    body:[],
-    statusCode:topres.statusCode,
-    headers:topres.headers,
-    // array of successful responses
-    success:[],
-    // array of error responses
-    errors:[]
-  }
-
-  function process_response(res){
-    if(!res.headers){
-      res.headers = {};
-    }
-    if(res.headers["content-type"]==='digger/multipart'){
-      res.body.forEach(function(child_res){
-        process_response(child_res);  
-      })
-      
-    }
-    else{
-      if(res.statusCode===200){
-        if(utils.isArray(res.body)){
-          results.body = results.body.concat(res.body);  
-        }
-        else if(res.body!==null && res.body!==undefined){
-          results.body.push(res.body);
-        }
-        results.success.push(res);
-      }
-      else{
-        results.errors.push(res);
-      }
-    }
-  }
-
-  process_response(topres);
-
-  return results;
-}
-
-
 /*
 
   the handler function accepts a pure JS req object to be sent to the server as HTTP or socket (but it's basically a HTTP)
@@ -135,13 +91,18 @@ SupplyChain.prototype.contract = function(req, container){
           loadresults.reject(error);
         }
         else{
-          var parsed_response = parse_multipart_response(result);
-          
-          if(results_processor){
-            parsed_response.body = results_processor(parsed_response.body);
+          if(!result){
+            result = [];
+          }
+          if(!utils.isArray(result)){
+            result = [result];
           }
 
-          loadresults.resolve(parsed_response);
+          if(results_processor){
+            result = results_processor(result);
+          }
+
+          loadresults.resolve(result);
         }
       })
     }
@@ -160,19 +121,20 @@ SupplyChain.prototype.contract = function(req, container){
     promise
       .then(function(answer){
         if(fn){
-          fn(answer.body, answer);
+          fn(answer);
           if(req._after){
-            req._after(answer.body, answer);
+            req._after(answer);
           }
         }
       })
+
     process.nextTick(function(){
       trigger_request();
     })
     return this;
   }
-  req.error = function(fn){
-    promise.error(fn);
+  req.fail = function(fn){
+    promise.fail(fn);
     return this;
   }
   req.expect = function(type){
