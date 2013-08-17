@@ -28,7 +28,6 @@
 */
 
 var Container = require('digger-container');
-var Q = require('q');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var utils = require('digger-utils');
@@ -76,10 +75,8 @@ SupplyChain.prototype.contract = function(req, container){
   if(!req.headers){
     req.headers = {};
   }
-  var loadresults = Q.defer();
-  var results_processor = null;
-
-  function trigger_request(){
+  
+  function trigger_request(callback){
     if(!self.handle || typeof(self.handle)!='function'){
       setTimeout(function(){
         loadresults.reject('There is no handle method attached to this supplychain')
@@ -88,7 +85,8 @@ SupplyChain.prototype.contract = function(req, container){
     else{
       self.handle(req, function(error, result){
         if(error){
-          loadresults.reject(error);
+          callback(error);
+          return;
         }
         else{
           if(!result){
@@ -98,48 +96,43 @@ SupplyChain.prototype.contract = function(req, container){
             result = [result];
           }
 
-          if(results_processor){
-            result = results_processor(result);
+          if(req.results_processor){
+            result = req.results_processor(result);
           }
 
-          loadresults.resolve(result);
+          callback(null, result);
         }
       })
     }
   }
 
-  var promise = loadresults.promise;
-  
-  /*
-  
-    we are basically wrapping the .then method of a promise here
-    but intercepting the results
-    
-  */
-  loadresults.contract = req;
   req.ship = function(fn){
-    promise
-      .then(function(answer){
-        if(fn){
+
+    process.nextTick(function(){
+      trigger_request(function(error, answer){
+        if(error){
+          if(req._fail){
+            req._fail(error);  
+          }
+        }
+        else{
           fn(answer);
           if(req._after){
             req._after(answer);
           }
         }
       })
-
-    process.nextTick(function(){
-      trigger_request();
     })
+
     return this;
   }
   req.fail = function(fn){
-    promise.fail(fn);
+    req._fail = fn;
     return this;
   }
   req.expect = function(type){
     if(type=='containers'){
-      results_processor = function(results){
+      req.results_processor = function(results){
         return container.spawn(results);
       }
     }
