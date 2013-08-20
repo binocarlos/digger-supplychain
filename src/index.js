@@ -83,7 +83,19 @@ SupplyChain.prototype.contract = function(req, container){
       }, 0)
     }
     else{
-      self.handle(req, function(error, result){
+
+      /*
+      
+        here we serialize the request because we are transporting it
+        
+      */
+      self.handle({
+        method:req.method,
+        url:req.url,
+        headers:req.headers,
+        body:req.body
+      }, function(error, result){
+
         if(error){
           callback(error);
           return;
