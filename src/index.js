@@ -126,6 +126,11 @@ SupplyChain.prototype.contract = function(req, container){
           if(req._fail){
             req._fail(error);  
           }
+          else{
+            console.log('a request has an error but the contract has no fail handler');
+            console.dir(req.method + ' ' + req.url);
+            console.log(error);
+          }
         }
         else{
           fn(answer);
