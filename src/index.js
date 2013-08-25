@@ -56,6 +56,7 @@ function SupplyChain(handle, use_container){
   // data if this is an entirely local setup
   this.handle = handle;
   this.container = use_container || Container;
+  this.create = use_container || Container;
 }
 
 
