@@ -105,7 +105,10 @@ SupplyChain.prototype.contract = function(req, container){
           if(!result){
             result = [];
           }
-          if(!utils.isArray(result)){
+          if(!utils.isArray(result) && typeof(result)==='object'){
+            if(result.headers){
+              result = result.body;
+            }
             result = [result];
           }
 
