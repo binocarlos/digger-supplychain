@@ -80,7 +80,7 @@ SupplyChain.prototype.contract = function(req, container){
   function trigger_request(callback){
     if(!self.handle || typeof(self.handle)!='function'){
       setTimeout(function(){
-        loadresults.reject('There is no handle method attached to this supplychain')
+        callback('There is no handle method attached to this supplychain')
       }, 0)
     }
     else{
