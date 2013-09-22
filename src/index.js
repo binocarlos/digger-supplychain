@@ -186,8 +186,14 @@ SupplyChain.prototype.contract = function(req, container){
 */
 SupplyChain.prototype.connect = function(diggerwarehouse, diggerid){
   var self = this;
+  if(!diggerwarehouse || diggerwarehouse.length<=0){
+    diggerwarehouse = '/';
+  }
+  if(diggerwarehouse.charAt(0)!='/'){
+    diggerwarehouse = '/' + diggerwarehouse;
+  }
   var container = self.container(arguments.length>1 ? 'item' : '_supplychain');
-  container.diggerwarehouse(diggerwarehouse || '/');
+  container.diggerwarehouse(diggerwarehouse);
   if(arguments.length>1){
     container.diggerid(diggerid);
   }
