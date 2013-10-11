@@ -196,12 +196,13 @@ SupplyChain.prototype.connect = function(diggerwarehouse, diggerid){
   }
 
   function processurl(url){
-    if(!diggerwarehouse || diggerwarehouse.length<=0){
-      diggerwarehouse = '/';
+    if(!url || url.length<=0){
+      url = '/';
     }
-    if(diggerwarehouse.charAt(0)!='/'){
-      diggerwarehouse = '/' + diggerwarehouse;
+    if(url.charAt(0)!='/'){
+      url = '/' + url;
     }
+    return url;
   }
 
   var models = [];
