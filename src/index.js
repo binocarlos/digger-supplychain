@@ -186,17 +186,48 @@ SupplyChain.prototype.contract = function(req, container){
 */
 SupplyChain.prototype.connect = function(diggerwarehouse, diggerid){
   var self = this;
-  if(!diggerwarehouse || diggerwarehouse.length<=0){
-    diggerwarehouse = '/';
+  if(!utils.isArray(diggerwarehouse)){
+    if(!diggerid){
+      diggerwarehouse = [diggerwarehouse];  
+    }
   }
-  if(diggerwarehouse.charAt(0)!='/'){
-    diggerwarehouse = '/' + diggerwarehouse;
+  else{
+    diggerid = null;
   }
-  var container = self.container(arguments.length>1 ? 'item' : '_supplychain');
-  container.diggerwarehouse(diggerwarehouse);
-  if(arguments.length>1){
-    container.diggerid(diggerid);
+
+  function processurl(url){
+    if(!diggerwarehouse || diggerwarehouse.length<=0){
+      diggerwarehouse = '/';
+    }
+    if(diggerwarehouse.charAt(0)!='/'){
+      diggerwarehouse = '/' + diggerwarehouse;
+    }
   }
+
+  var models = [];
+  if(!utils.isArray(diggerwarehouse)){
+    diggerwarehouse = processurl(diggerwarehouse);
+    models = [{
+      _digger:{
+        tag:diggerid ? 'item' : '_supplychain',
+        diggerwarehouse:diggerwarehouse,
+        diggerid:diggerid
+      }
+    }]
+  }
+  else{
+    models = diggerwarehouse.map(function(warehouseurl){
+      warehouseurl = processurl(warehouseurl);
+      return {
+        _digger:{
+          diggerwarehouse:warehouseurl,
+          tag:'_supplychain'
+        }
+      }
+    })
+  }
+  
+  var container = self.container(models);
   container.supplychain = this;
   return container;
 }
