@@ -245,7 +245,7 @@ SupplyChain.prototype.contract_group = function(type, contracts){
   }
 
   // we use this to generate hooked up containers as results
-  var stub = self.container();
+  var stub = Container();
   stub.supplychain = this;
 
   return this.contract(raw, stub);
