@@ -1,6 +1,6 @@
 {
   "name": "digger-supplychain",
-  "version": "0.0.17",
+  "version": "0.1.0",
   "description": "The supply chain wrapper for digger.io transport layers",
   "main": "src/index.js",
   "scripts": {
@@ -25,7 +25,7 @@
     "mocha-phantomjs": "~3.1.6",
     "browserify": "*",
     "should": "~2.1.0",
-    "digger-contracts":"*"
+    "digger-contracts": "*"
   },
   "dependencies": {
     "digger-container": "*",
