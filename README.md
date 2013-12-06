@@ -1,36 +1,45 @@
 digger-supplychain
 ==================
 
-The supply chain wrapper for digger.io transport layers
+![Build status](https://api.travis-ci.org/binocarlos/digger-supplychain.png)
+
+Interface for [digger-contracts](https://github.com/binocarlos/digger-contracts) to be sent to the server and respond with a [digger-container](https://github.com/binocarlos/digger-container)
+
+# install
+
+as a node module:
+
+	$ npm install digger-contracts
+
+or in the browser using [browserify](https://github.com/substack/node-browserify)
 
 ## example
 
 ```js
+var supplychain = new SupplyChain();
 
-var SupplyChain = require('digger-supplychain');
-
-// this is the adaptor function - it can plug into a XHR or socket if in the browser
-// or a backend socket if on the server
-
-var handle = function(req, reply){
-	// pipe the request to a backend warehouse that will serve the request
-	warehouse(req, reply);
-}
-
-// create the supplychain from the handler function
-var supplychain = SupplyChain(handle);
-
-// now we can 'connect' to different backend warehouses via their routes
-var database_container = supplychain.connect('/db1');
-
-// this means we can run contracts now
-
-database_container('some.selector').ship(function(results){
-
-	// results is a digger-container
-	console.log('loaded ' + results.count() + ' results');
+supplychain.on('request', function(req, reply){
+  req.method.should.equal('post');
+  req.url.should.equal('/myapi/select');
+  req.headers['x-json-selector'].tag.should.equal('hello');
+  reply(null, [{
+    _digger:{
+      tag:'fruit',
+      class:['citrus']
+    }
+  }]);
 })
 
+var container = supplychain.connect('/myapi');
+container.diggerurl().should.equal('/myapi');
+
+var contract = container('hello');
+
+contract.ship(function(results){
+  results.tag().should.equal('fruit');
+  results.hasClass('citrus').should.equal(true);
+  done();
+})
 ```
 
 ## licence

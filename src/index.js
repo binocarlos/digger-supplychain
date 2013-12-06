@@ -27,20 +27,12 @@
 	
 */
 
-var Container = require('digger-container');
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
 var utils = require('digger-utils');
+var Container = require('digger-container');
+var Contract = require('./contract');
+var EventEmitter = require('events').EventEmitter;
 
-
-module.exports = factory;
-
-function factory(handle, use_container){
-
-  var supplychain = new SupplyChain(handle, use_container);
-
-  return supplychain;
-}
+module.exports = SupplyChain;
 
 /*
 
@@ -50,17 +42,11 @@ function factory(handle, use_container){
   
 */
 
-function SupplyChain(handle, use_container){
-
-  // force the request into new references so we are not messing with client
-  // data if this is an entirely local setup
-  this.handle = handle;
-  this.container = use_container || Container;
-  this.create = use_container || Container;
+function SupplyChain(container_factory){
+  this.create = container_factory || Container;
 }
 
-
-util.inherits(SupplyChain, EventEmitter);
+utils.inherits(SupplyChain, EventEmitter);
 
 /*
 
@@ -73,103 +59,28 @@ SupplyChain.prototype.contract = function(req, container){
 
   var self = this;
 
-  if(!req.headers){
-    req.headers = {};
+  var contract = new Contract(req, container);
+
+  contract.on('ship', function(callback){
+    self.emit('request', {
+      method:req.method,
+      url:req.url,
+      headers:req.headers,
+      body:req.body
+    }, callback);
+  })
+
+  return contract;
+}
+
+function processurl(url){
+  if(!url || url.length<=0){
+    url = '/';
   }
-  
-  function trigger_request(callback){
-    if(!self.handle || typeof(self.handle)!='function'){
-      setTimeout(function(){
-        callback('There is no handle method attached to this supplychain')
-      }, 0)
-    }
-    else{
-
-      /*
-      
-        here we serialize the request because we are transporting it
-        
-      */
-      self.handle({
-        method:req.method,
-        url:req.url,
-        headers:req.headers,
-        body:req.body
-      }, function(error, result){
-
-        if(error){
-          callback(error);
-          return;
-        }
-        else{
-          if(!result){
-            result = [];
-          }
-          if(!utils.isArray(result) && typeof(result)==='object'){
-            if(result.headers){
-              result = result.body;
-            }
-            result = [result];
-          }
-
-          if(req.results_processor){
-            result = req.results_processor(result);
-          }
-
-          callback(null, result);
-        }
-      })
-    }
+  if(url.charAt(0)!='/'){
+    url = '/' + url;
   }
-
-  req.ship = function(fn){
-
-    process.nextTick(function(){
-      trigger_request(function(error, answer){
-        if(error){
-          if(req._fail){
-            req._fail(error);  
-          }
-          else{
-            console.log('a request has an error but the contract has no fail handler');
-            console.dir(req.method + ' ' + req.url);
-            console.log(error);
-          }
-        }
-        else{
-          fn(answer);
-          if(req._after){
-            req._after(answer);
-          }
-        }
-      })
-    })
-
-    return this;
-  }
-  req.fail = function(fn){
-    req._fail = fn;
-    return this;
-  }
-  req.expect = function(type){
-    if(type=='containers'){
-      req.results_processor = function(results){
-        return container.spawn(results);
-      }
-    }
-    return this;
-  }
-  req.after = function(fn){
-    req._after = fn;
-    return this;
-  }
-  req.debug = function(){
-    req.headers['x-debug'] = true;
-    return this;
-  }
-
-  return req;
-
+  return url;
 }
 
 /*
@@ -195,16 +106,6 @@ SupplyChain.prototype.connect = function(diggerwarehouse, diggerid){
     diggerid = null;
   }
 
-  function processurl(url){
-    if(!url || url.length<=0){
-      url = '/';
-    }
-    if(url.charAt(0)!='/'){
-      url = '/' + url;
-    }
-    return url;
-  }
-
   var models = [];
   if(!utils.isArray(diggerwarehouse)){
     diggerwarehouse = processurl(diggerwarehouse);
@@ -228,7 +129,7 @@ SupplyChain.prototype.connect = function(diggerwarehouse, diggerid){
     })
   }
   
-  var container = self.container(models);
+  var container = this.create(models);
   container.supplychain = this;
   return container;
 }
