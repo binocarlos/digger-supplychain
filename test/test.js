@@ -1,14 +1,5 @@
-var Container = require('digger-container');
-var Contracts = require('digger-contracts');
+var Container = require('digger-bundle');
 var SupplyChain = require('../src');
-
-function augment_prototype(api){
-  for(var prop in api){
-    Container.prototype[prop] = api[prop];
-  }
-}
-
-augment_prototype(Contracts);
 
 describe('supplychain', function(){
 

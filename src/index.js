@@ -28,7 +28,7 @@
 */
 
 var utils = require('digger-utils');
-var Container = require('digger-container');
+var Container = require('digger-bundle');
 var Contract = require('./contract');
 var EventEmitter = require('events').EventEmitter;
 
