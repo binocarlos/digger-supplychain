@@ -42,12 +42,8 @@ module.exports = SupplyChain;
   
 */
 
-function SupplyChain(handler, container_factory){
-  if(arguments.length<=1){
-    container_factory = handler;
-    handler = null;
-  }
-  this.create = container_factory || Container;
+function SupplyChain(handler){
+  this.create = Container;
 
   if(handler){
     this.on('request', handler);
