@@ -78,6 +78,26 @@ describe('supplychain', function(){
 
   })
 
+  it('should cope with an error via a fail handler', function(done){
+
+    var supplychain = new SupplyChain();
+
+    supplychain.on('request', function(req, reply){
+      reply('this is an error');
+    })
+
+    var container = supplychain.connect();
+    
+    var contract = container('hello');
+    contract
+    .fail(function(error){
+      error.should.equal('this is an error');
+      done();
+    })
+    .ship()
+
+  })
+
   it('should cope with an error via events', function(done){
 
     var supplychain = new SupplyChain();
