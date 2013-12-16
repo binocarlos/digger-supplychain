@@ -42,11 +42,15 @@ module.exports = SupplyChain;
   
 */
 
-function SupplyChain(handler){
+function SupplyChain(request_handler, radio_handler){
   this.create = Container;
 
-  if(handler){
-    this.on('request', handler);
+  if(request_handler){
+    this.on('request', request_handler);
+  }
+
+  if(radio_handler){
+    this.on('radio', radio_handler);
   }
 }
 

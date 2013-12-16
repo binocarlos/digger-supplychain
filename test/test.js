@@ -142,4 +142,38 @@ describe('supplychain', function(){
 
   })
 
+  it('should accept request and radio handler args', function(done){
+
+    function request_handler(req, res){
+      req.headers["x-json-selector"].tag.should.equal('hello');
+      res(null, [{
+        value:10
+      }]);
+    }
+
+    function radio_hander(action, channel, packet){
+      action.should.equal('talk');
+      channel.should.equal('.pears');
+      packet.should.equal(10);
+    }
+
+    var supplychain = new SupplyChain(request_handler, radio_hander);
+
+    var container = supplychain.connect();
+    var radio = container.radio();
+
+    var contract = container('hello');
+
+    contract.on('results', function(results){
+
+      results.attr('value').should.equal(10);
+      radio.talk('pears', 10);
+
+      done();
+    });
+
+    contract.ship();
+
+  })
+
 })
