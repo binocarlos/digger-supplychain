@@ -44,6 +44,7 @@ module.exports = SupplyChain;
 
 function SupplyChain(request_handler, radio_handler){
   this.create = Container;
+  this.container = Container;
 
   if(request_handler){
     this.on('request', request_handler);
