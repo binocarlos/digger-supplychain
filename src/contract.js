@@ -80,6 +80,9 @@ Contract.prototype.ship = function(fn, errorfn){
     })
     self.emit('results', results);
     fn && fn(results);
+    if(self._after){
+      self._after(results);
+    }
   });
   return this;
 }
@@ -87,4 +90,8 @@ Contract.prototype.ship = function(fn, errorfn){
 Contract.prototype.fail = function(fn){
   this.on('error', fn);
   return this;
+}
+
+Contract.prototype.after = function(fn){
+  this._after = fn;
 }
