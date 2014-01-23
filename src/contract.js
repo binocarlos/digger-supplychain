@@ -87,7 +87,7 @@ Contract.prototype.ship = function(fn, errorfn){
   return this;
 }
 
-Contract.prototype.fail = function(fn){
+Contract.prototype.fail = Contract.prototype.error = function(fn){
   this.on('error', fn);
   return this;
 }
