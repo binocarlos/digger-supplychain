@@ -72,7 +72,6 @@ Contract.prototype.ship = function(fn, errorfn){
   this.emit('ship', function(error, results){
     if(error){
       errorfn && errorfn(error);
-      self.emit('error', error);
       return;
     }
     self.processors.forEach(function(processor){
