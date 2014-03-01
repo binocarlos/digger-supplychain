@@ -140,6 +140,7 @@ SupplyChain.prototype.connect = function(diggerwarehouse, diggerid){
   
   var container = this.create(models);
   container.supplychain = this;
+  container.create = this.create.bind(this);
   return container;
 }
 
