@@ -149,8 +149,9 @@ SupplyChain.prototype.contract_group = function(type, contracts){
     method:'post',
     url:'/reception',
     headers:{
-      'content-type':'digger/contract',
-      'x-contract-type':type
+      'Content-Type':'application/json',
+      'x-contract-type':type,
+      'x-contract-id':utils.diggerid()
     },
     body:contracts || []
   }
@@ -168,7 +169,9 @@ SupplyChain.prototype.contract_group = function(type, contracts){
   
 */
 SupplyChain.prototype.merge = function(contracts){
-  return this.contract_group('merge', contracts);
+  return this.contract_group('merge', contracts.map(function(contract){
+    return contract.req;
+  }));
 }
 
 /*
@@ -177,5 +180,7 @@ SupplyChain.prototype.merge = function(contracts){
   
 */
 SupplyChain.prototype.pipe = function(contracts){
-  return this.contract_group('pipe', contracts);
+  return this.contract_group('pipe', contracts.map(function(contract){
+    return contract.req;
+  }));
 }
