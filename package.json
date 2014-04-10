@@ -27,7 +27,7 @@
     "should": "~2.1.0"
   },
   "dependencies": {
-    "digger-bundle": "*",
-    "digger-utils": "*"
+    "digger-bundle": "~0.0.3",
+    "digger-utils": "~1.2.0"
   }
 }
