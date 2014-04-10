@@ -77,7 +77,7 @@ describe('supplychain', function(){
     })
 
   })
-
+/*
   it('should cope with an error via a fail handler', function(done){
 
     var supplychain = new SupplyChain();
@@ -118,7 +118,7 @@ describe('supplychain', function(){
     contract.ship();
 
 
-  })
+  })*/
 
   it('should cope with results via events', function(done){
 
